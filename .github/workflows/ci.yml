@@ -96,6 +96,15 @@ jobs:
           code=$(curl --silent --output /tmp/invalid.json --write-out "%{http_code}" -F "file=@README.md;filename=invalid.docx" http://localhost:3000/api/convert)
           test "$code" = "400"
           grep -q "valid DOCX" /tmp/invalid.json
+      - name: Verify per-process rate limiting
+        run: |
+          for attempt in $(seq 1 8); do
+            code=$(curl --silent --output /dev/null --write-out "%{http_code}" -F "file=@README.md;filename=invalid.docx" http://localhost:3000/api/convert)
+            test "$code" = "400"
+          done
+          code=$(curl --silent --output /tmp/rate-limit.json --write-out "%{http_code}" -F "file=@README.md;filename=invalid.docx" http://localhost:3000/api/convert)
+          test "$code" = "429"
+          grep -q "Too many conversion requests" /tmp/rate-limit.json
       - name: Print container logs on failure
         if: failure()
         run: docker logs doc-to-pdf-ci || true
