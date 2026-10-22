@@ -45,7 +45,7 @@ export default function Home() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       setSuccess("Conversion finished. Your PDF download should begin shortly.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
