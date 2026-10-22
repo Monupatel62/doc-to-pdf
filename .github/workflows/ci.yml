@@ -29,6 +29,8 @@ jobs:
         run: |
           npm audit --json > /tmp/npm-audit.json || true
           node -e 'const a=require("/tmp/npm-audit.json"); for (const [name,v] of Object.entries(a.vulnerabilities || {})) console.log(`${v.severity}: ${name}; direct=${v.isDirect}; range=${v.range}; fix=${JSON.stringify(v.fixAvailable)}`); console.log(`Totals: ${JSON.stringify(a.metadata?.vulnerabilities || {})}`)'
+      - name: Enforce dependency audit
+        run: npm audit --audit-level=high
       - name: Lint
         run: npm run lint
       - name: Type check
