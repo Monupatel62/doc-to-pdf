@@ -36,9 +36,22 @@ docker build -t doc-to-pdf .
 docker run --rm -p 3000:3000 -e NEXT_PUBLIC_SITE_URL=http://localhost:3000 doc-to-pdf
 ```
 
+## Deploy
+
+A Render Blueprint is included in `render.yaml` for a Docker-based web service with `/api/health` health checks.
+
+1. Open [Render](https://render.com/) and connect this GitHub repository.
+2. Create a new Blueprint from the repository and review the `doc-to-pdf` service.
+3. Set `NEXT_PUBLIC_SITE_URL` to the actual HTTPS URL Render assigns, or your own canonical domain if configured.
+4. Wait for the deployment and health check to pass.
+5. Open `/`, `/privacy`, `/robots.txt`, `/sitemap.xml` and `/api/health` on the deployed host.
+6. Keep the service behind provider request/body limits and configure resource limits before public use.
+
+This repository configuration does not deploy the service automatically from ChatGPT; the hosting account must authorize and run the deployment.
+
 ## Environment
 
-Set `NEXT_PUBLIC_SITE_URL` to the real canonical origin (including HTTPS) in the deployment environment. The sitemap and robots routes intentionally avoid publishing placeholder sitemap URLs when the setting is absent or invalid.
+Set `NEXT_PUBLIC_SITE_URL` to the real canonical origin (including HTTPS) in the deployment environment. The Render Blueprint declares this as a dashboard-supplied value. The sitemap and robots routes intentionally avoid publishing placeholder sitemap URLs when the setting is absent or invalid.
 
 ## Important limitations
 
