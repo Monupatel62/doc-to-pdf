@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (bytes.length < 4 || bytes.readUInt32LE(0) !== 0x04034b50) {
       return errorResponse("This does not appear to be a valid DOCX document.", 400);
     }
-  } else if (bytes.length < 8 || bytes.toString("ascii", 0, 8) !== "D0CF11E0A1B11AE1") {
+  } else if (bytes.length < 8 || bytes.subarray(0, 8).toString("hex") !== "d0cf11e0a1b11ae1") {
     return errorResponse("This does not appear to be a valid DOC document.", 400);
   }
 
