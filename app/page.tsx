@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DragEvent, useRef, useState } from "react";
+import { type DragEvent, useRef, useState } from "react";
 
 type Result = { error?: string };
 const MAX_BYTES = 15 * 1024 * 1024;
