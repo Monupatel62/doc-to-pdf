@@ -40,7 +40,7 @@ function runLibreOffice(inputPath: string, outputDir: string): Promise<void> {
 }
 
 export async function POST(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim();
   const clientKey = forwardedFor || request.headers.get("x-real-ip") || "unknown";
   const now = Date.now();
   const recent = (recentRequests.get(clientKey) || []).filter(timestamp => now - timestamp < RATE_WINDOW_MS);
@@ -49,6 +49,12 @@ export async function POST(request: NextRequest) {
   }
   recent.push(now);
   recentRequests.set(clientKey, recent);
+  if (recentRequests.size > 5000) {
+    for (const [key, timestamps] of recentRequests) {
+      if (!timestamps.some(timestamp => now - timestamp < RATE_WINDOW_MS)) recentRequests.delete(key);
+      if (recentRequests.size <= 4000) break;
+    }
+  }
   if (activeConversions >= MAX_ACTIVE_CONVERSIONS) {
     return errorResponse("The converter is busy. Please try again shortly.", 503);
   }
@@ -77,7 +83,13 @@ export async function POST(request: NextRequest) {
   }
 
   activeConversions += 1;
-  const workDir = await mkdtemp(path.join(tmpdir(), "doc-to-pdf-"));
+  let workDir: string;
+  try {
+    workDir = await mkdtemp(path.join(tmpdir(), "doc-to-pdf-"));
+  } catch {
+    activeConversions = Math.max(0, activeConversions - 1);
+    return errorResponse("Temporary storage is unavailable. Please try again later.", 503);
+  }
   const safeBase = randomUUID();
   const inputPath = path.join(workDir, safeBase + extension);
   const outputPath = path.join(workDir, safeBase + ".pdf");
