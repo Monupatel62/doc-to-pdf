@@ -1,76 +1,53 @@
 # Security Threat Model and Privacy Requirements
 
-**Status:** Required design and review document. This is not a certification or claim that the future application is secure.
+**Status:** Working threat model. The implemented controls are useful baseline defenses, not a security certification.
 
-## 1. Assets to protect
+## Assets
+- Uploaded Word documents and generated PDFs
+- Client IP / request metadata and temporary files
+- Hosting credentials, deployment configuration and operational availability
 
-- Uploaded DOC/DOCX documents and generated PDFs
-- Job IDs, access tokens and download URLs
-- User IP addresses and operational metadata
-- Hosting credentials, signing keys and environment secrets
-- Converter worker availability and infrastructure resources
+## Current baseline controls
+- Server-side 15 MB file-size check, DOC/DOCX extension and basic signature checks
+- Random temporary file names and private file permissions
+- Fixed LibreOffice process arguments without shell interpolation; process timeout
+- Output PDF signature and size validation
+- Best-effort temporary-directory cleanup
+- In-memory per-process rate limit and concurrency cap
+- Docker runtime uses the unprivileged Node user
+- Basic security headers and private/no-store PDF responses
+- CI dependency audit and container conversion smoke tests
 
-## 2. Main threats
+## Threats and required controls
 
-| Threat | Risk | Required controls |
+| Threat | Current mitigation | Remaining work |
 |---|---|---|
-| Malicious or malformed document | Worker compromise or resource exhaustion | Isolated worker, patched converter, CPU/memory/time limits |
-| Oversized or repeated uploads | Cost spikes and denial of service | Request limits, quotas, rate limits, queue caps |
-| Path traversal or unsafe filename | File overwrite or data exposure | Server-generated filenames, safe paths, no user-controlled paths |
-| Command injection | Arbitrary command execution | Avoid shell interpolation; use safe process APIs and fixed arguments |
-| Predictable job IDs | Other users access documents | Cryptographically random IDs plus authorization |
-| Public or leaked storage URL | Private document disclosure | Private bucket, short-lived signed access if needed, no public listing |
-| Retained temporary files | Data exposure after conversion | Automated TTL cleanup, cleanup monitoring, retention tests |
-| Secrets in logs | Account or infrastructure compromise | Secret redaction, minimal logging, access controls |
-| Dependency or image vulnerability | Service compromise | Pinned dependencies, regular updates and vulnerability review |
-| Cross-site scripting or unsafe rendering | User/browser compromise | Escape output, safe headers, avoid rendering uploaded content as HTML |
+| Malicious/malformed document | Basic signatures; conversion timeout | Isolate converter, restrict network, CPU/memory/PID limits, patch OS and LibreOffice |
+| Oversized request | App file size check and Content-Length guard | Enforce request-body limits at proxy/hosting edge before multipart parsing |
+| Repeated uploads | Per-process rate and concurrency limits | Distributed rate limiting, quotas and abuse monitoring |
+| Spoofed client IP | Use last X-Forwarded-For entry when present | Configure and trust only the known reverse proxy; verify forwarded headers cannot be client-controlled |
+| Path traversal / unsafe filename | Generated file names and fixed paths | Keep regression tests and inspect download header handling |
+| Command injection | Spawn with fixed arguments and no shell | Maintain safe arguments and regression tests |
+| Temporary file residue | Finally-block cleanup | Test crash/timeout cleanup and configure host temp storage lifecycle |
+| Dependency / image vulnerability | Automated npm audit and CI | Regular updates, image scanning and OS patching |
+| Resource exhaustion | Timeout, output cap, concurrency cap | Container/host resource limits, queueing and load testing |
+| Privacy mismatch | Technical notice explains upload processing | Add operator identity, contact, retention, hosting and logging facts before launch |
 
-## 3. File-handling rules
+## Privacy facts to confirm before launch
+- Whether IP addresses and request metadata are logged
+- Hosting and conversion providers and their data locations
+- Temporary storage location, retention and deletion failure behavior
+- Analytics/cookies and any third-party scripts
+- Operator identity and a contact route for privacy requests
 
-- Treat every upload as hostile input.
-- Do not execute macros or active content from uploaded documents.
-- Do not render the source document in the main application origin unless there is a strong, reviewed reason.
-- Store files outside public web roots.
-- Use generated storage keys unrelated to the original filename.
-- Verify access on every status and download request.
-- Do not rely on an unguessable ID alone if the product has user accounts or needs stronger access control.
-- Keep conversion workers isolated from secrets and internal services.
-- Apply a strict maximum file size, conversion timeout, output size and concurrency limit.
+Do not promise local-only processing, zero storage, end-to-end encryption or instant deletion unless implemented and verified.
 
-## 4. Privacy policy facts to determine
-
-Before writing final public legal copy, record:
-- Whether conversion is browser-side or server-side
-- Which file types are accepted
-- Maximum upload and output size
-- Whether IP addresses or job metadata are logged
-- Whether third-party storage or processing providers are involved
-- Retention duration for inputs, outputs and job records
-- How automatic deletion works and how failures are detected
-- Whether analytics/cookies are used
-- A support/contact route for privacy requests
-
-Public wording must match the real system. Never promise local-only processing, zero storage, end-to-end encryption or instant deletion unless these are implemented and independently verified.
-
-## 5. Operational controls
-
-- Use separate development, staging and production secrets.
-- Restrict access to deployment and storage consoles.
-- Enable HTTPS and secure cookies where cookies are used.
-- Configure appropriate security headers and a tested Content Security Policy.
-- Keep dependencies and converter packages updated.
-- Alert on unusual upload volume, high failure rates, worker restarts and cleanup failures.
-- Have a documented incident response and rollback plan.
-- Limit staff access to uploaded content; avoid manual inspection unless necessary and authorised.
-
-## 6. Security release gate
-
-Do not launch until:
-- [ ] Access-control tests show users cannot fetch another user's file.
-- [ ] Upload validation and size limits are enforced server-side.
-- [ ] Worker isolation and resource limits are verified.
-- [ ] Expiry and cleanup work for success, failure and timeout paths.
-- [ ] Logs are checked for document contents, filenames and secrets.
-- [ ] Dependency and container images have been reviewed.
-- [ ] Privacy statements accurately describe processing and retention.
-- [ ] A responsible contact and incident handling path are documented.
+## Security release gate
+- [ ] Hosting-edge request/body limits configured and tested.
+- [ ] Distributed rate limiting and abuse monitoring configured.
+- [ ] Container resource and network restrictions verified.
+- [ ] DOC/DOCX malformed and hostile test corpus reviewed.
+- [ ] Cleanup tested on success, conversion failure and timeout.
+- [ ] Logs reviewed for filenames, contents and secrets.
+- [ ] Privacy wording matches the real deployed data flow.
+- [ ] External security review and load test completed.
