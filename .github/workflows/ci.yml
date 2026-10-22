@@ -61,6 +61,8 @@ jobs:
         run: |
           grep -q "Convert DOC and DOCX to PDF" /tmp/home.html
           curl --fail --silent http://localhost:3000/privacy | grep -q "Privacy information"
+          curl --fail --silent http://localhost:3000/doc-to-pdf | grep -q "Convert DOC to PDF online"
+          curl --fail --silent http://localhost:3000/docx-to-pdf | grep -q "Convert DOCX to PDF online"
           curl --fail --silent http://localhost:3000/api/health | grep -q '"status":"ok"'
           curl --fail --silent http://localhost:3000/robots.txt | grep -q "Disallow: /api/"
           curl --fail --silent http://localhost:3000/sitemap.xml | grep -q "http://localhost:3000/"
