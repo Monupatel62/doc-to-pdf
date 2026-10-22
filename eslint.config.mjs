@@ -1,9 +1,22 @@
+import globals from "globals";
+import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTypescript from "eslint-config-next/typescript";
 
 export default defineConfig([
-  nextVitals,
-  nextTypescript,
+  ...tseslint.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_"
+      }]
+    }
+  },
   globalIgnores([".next/**", "node_modules/**", "next-env.d.ts"])
 ]);
