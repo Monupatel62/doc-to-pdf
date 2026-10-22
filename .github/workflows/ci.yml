@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: doc-to-pdf-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   app-checks:
     runs-on: ubuntu-latest
