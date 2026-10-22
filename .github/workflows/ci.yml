@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - name: Install dependencies
         run: npm install
       - name: Lint
@@ -29,10 +28,65 @@ jobs:
       - name: Production build
         run: npm run build
 
-  docker-build:
+  docker-integration:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build container
         run: docker build -t doc-to-pdf:ci .
+      - name: Start container
+        run: docker run --detach --rm --name doc-to-pdf-ci -p 3000:3000 -e NEXT_PUBLIC_SITE_URL=http://localhost:3000 doc-to-pdf:ci
+      - name: Wait for application
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3000/ > /tmp/home.html; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs doc-to-pdf-ci
+          exit 1
+      - name: Verify home page and privacy route
+        run: |
+          grep -q "Convert DOC and DOCX to PDF" /tmp/home.html
+          curl --fail --silent http://localhost:3000/privacy | grep -q "Privacy information"
+      - name: Generate a minimal DOCX fixture
+        run: |
+          python3 - <<'PY'
+          from zipfile import ZipFile, ZIP_DEFLATED
+          files = {
+            "[Content_Types].xml": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+          <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+            <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+            <Default Extension="xml" ContentType="application/xml"/>
+            <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+          </Types>""",
+            "_rels/.rels": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+          <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+            <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+          </Relationships>""",
+            "word/document.xml": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+          <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>DOC to PDF integration test</w:t></w:r></w:p><w:sectPr/></w:body></w:document>""",
+          }
+          with ZipFile("/tmp/sample.docx", "w", ZIP_DEFLATED) as archive:
+            for name, value in files.items():
+              archive.writestr(name, value)
+          PY
+      - name: Verify real DOCX to PDF conversion
+        run: |
+          curl --fail --silent --show-error \
+            -F "file=@/tmp/sample.docx;type=application/vnd.openxmlformats-officedocument.wordprocessingml.document" \
+            http://localhost:3000/api/convert --output /tmp/converted.pdf
+          head -c 5 /tmp/converted.pdf | grep -q "%PDF-"
+      - name: Verify invalid uploads are rejected
+        run: |
+          code=$(curl --silent --output /tmp/invalid.json --write-out "%{http_code}" -F "file=@README.md;filename=invalid.docx" http://localhost:3000/api/convert)
+          test "$code" = "400"
+          grep -q "valid DOCX" /tmp/invalid.json
+      - name: Print container logs on failure
+        if: failure()
+        run: docker logs doc-to-pdf-ci
+      - name: Stop container
+        if: always()
+        run: docker stop doc-to-pdf-ci || true
