@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 
 type Result = { error?: string; filename?: string };
@@ -55,7 +56,7 @@ export default function Home() {
   }
 
   return <main className="page">
-    <header className="topbar"><a className="brand" href="/">Doc to PDF</a><a href="#how-it-works">How it works</a></header>
+    <header className="topbar"><Link className="brand" href="/">Doc to PDF</Link><a href="#how-it-works">How it works</a></header>
     <section className="hero">
       <p className="eyebrow">WORD DOCUMENT CONVERTER</p>
       <h1>Convert DOC and DOCX to PDF</h1>
