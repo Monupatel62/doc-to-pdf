@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-
-export const metadata: Metadata = {
-  title: "Privacy Information | Doc to PDF",
-  description: "Learn how uploaded documents are processed by Doc to PDF."
-};
-
+export const metadata: Metadata = { title: "Privacy Information | Doc to PDF", description: "Understand how Doc to PDF processes uploaded Word documents and the limits of temporary-file cleanup.", alternates: { canonical: "/privacy" } };
 export default function PrivacyPage() {
-  return <main style={{ maxWidth: 760, margin: "48px auto", padding: "0 24px", fontFamily: "Arial, sans-serif", lineHeight: 1.7 }}>
-    <Link href="/">← Back to converter</Link>
-    <h1>Privacy information</h1>
-    <p>This MVP uploads the selected Word document to the server for conversion. The server creates temporary files while converting and attempts to remove the temporary working directory when processing ends.</p>
-    <p>Temporary cleanup is best-effort in this initial implementation. Operators must also configure secure hosting, access restrictions, disk lifecycle controls and monitoring before accepting sensitive documents.</p>
-    <p>Do not upload confidential or sensitive documents unless you trust the operator and have reviewed the deployed service&apos;s privacy practices.</p>
-    <p>This page is a technical notice, not a substitute for a complete legal privacy policy. Before public launch, update it with the actual operator identity, contact details, hosting/processing providers, logging practices, retention periods and applicable legal requirements.</p>
+  return <main className="guidePage">
+    <nav aria-label="Breadcrumb"><Link href="/">Home</Link> / Privacy</nav>
+    <h1>Privacy information</h1><p><strong>Last updated: 22 October 2026</strong></p>
+    <p>This page describes the document-processing behavior implemented in this application. It does not claim that every hosting, logging, backup, or network setting has been independently audited. The operator should verify those settings and update this page when the service changes.</p>
+    <h2>Documents you upload</h2><p>When you submit a DOC or DOCX file, your browser sends it to the server so the conversion engine can generate a PDF. The application writes input and output files into a temporary working directory while processing and returns the PDF to your browser.</p>
+    <h2>Temporary files and retention</h2><p>The application attempts to remove its temporary working directory when processing finishes, including after conversion errors. Cleanup is best-effort: a cleanup error is suppressed, and this is not a guarantee of secure erasure from all storage, infrastructure, backups, or logs. Application code alone does not establish the hosting provider's complete retention or backup behavior.</p>
+    <h2>Technical request information</h2><p>The server uses request information, including a forwarded client address when available, for an in-memory rate limit intended to reduce abusive use. This state is held in application memory and is not a durable account history. The hosting platform may independently process technical logs or network information; its current settings should be verified before making more specific statements.</p>
+    <h2>Cookies, analytics, and advertising</h2><p>This page does not claim that analytics, advertising cookies, or other tracking technologies are or are not active in the deployed environment. The operator should list the actual tools in use here before enabling them and explain their purpose and relevant user choices.</p>
+    <h2>Using the service carefully</h2><ul><li>Do not upload confidential, highly sensitive, or regulated documents unless you have assessed whether this service is suitable.</li><li>Review every generated PDF before sharing, submitting, or printing it.</li><li>Keep your original Word document if you may need to edit it later.</li></ul>
+    <h2>Operator and contact details</h2><p>The site owner must publish a real operator or publisher identity and a working contact method here. Those details have not been added because they must be confirmed by the owner, not guessed. Before treating this as a final public privacy policy, confirm hosting and processing providers, applicable retention periods, active analytics or advertising tools, and legal obligations.</p>
+    <p>Return to the <Link href="/">converter</Link> or read the <Link href="/doc-to-pdf">DOC</Link> and <Link href="/docx-to-pdf">DOCX</Link> guides.</p>
   </main>;
 }
