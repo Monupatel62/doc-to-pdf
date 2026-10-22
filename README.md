@@ -1,21 +1,23 @@
 # Doc to PDF
 
-A Next.js MVP for converting DOC and DOCX documents to PDF using LibreOffice in a Docker runtime.
+A Next.js application that converts DOC and DOCX Word documents to PDF using LibreOffice inside a Docker container.
 
-## Current status
+## Project status
 
-The initial application scaffold is committed, but **it has not yet been installed, built, tested or deployed**. Treat it as an implementation starting point, not a production-ready service.
+The application, deployment container, SEO routes and GitHub Actions checks are committed. The CI pipeline runs lint, TypeScript checks, a production build, a Docker build, and container smoke tests that exercise a generated DOCX conversion. Check the [GitHub Actions runs](https://github.com/Monupatel62/doc-to-pdf/actions) for the latest result before treating a commit as verified.
 
-## Features in this MVP
+A green smoke test does not replace broad conversion-quality, security, accessibility or production-load testing. The service is not production-ready until the launch checklist below is completed.
 
-- Responsive upload interface for DOC and DOCX files
-- 15 MB upload limit
-- Server-side extension and basic signature validation
-- PDF conversion through LibreOffice
-- Temporary working directory cleanup after each request
-- Basic security headers and no-store PDF responses
-- SEO metadata, sitemap route, robots.txt and a privacy information page
-- Dockerfile with LibreOffice Writer and common fonts
+## Features
+
+- Responsive DOC/DOCX upload and PDF download interface
+- 15 MB upload limit and server-side file extension/signature checks
+- PDF conversion through LibreOffice in the provided container
+- Random temporary filenames and best-effort temporary directory cleanup
+- Basic security response headers and private, non-cacheable PDF responses
+- Environment-aware sitemap and robots routes
+- Canonical metadata, Open Graph basics, privacy information page
+- CI for lint, type checking, production build, container startup and conversion smoke testing
 
 ## Run locally
 
@@ -25,7 +27,7 @@ Requirements: Node.js 22+ and LibreOffice installed and available as `libreoffic
 2. Start development server: `npm run dev`
 3. Open `http://localhost:3000`
 
-For production-like use, build and run the provided Docker image:
+For production-like use, use Docker so the conversion engine is available:
 
 ```sh
 docker build -t doc-to-pdf .
@@ -34,17 +36,17 @@ docker run --rm -p 3000:3000 -e NEXT_PUBLIC_SITE_URL=http://localhost:3000 doc-t
 
 ## Environment
 
-Set `NEXT_PUBLIC_SITE_URL` to the real canonical origin in deployment. Update `public/robots.txt` to use the same origin before launch.
+Set `NEXT_PUBLIC_SITE_URL` to the real canonical origin (including HTTPS) in the deployment environment. The sitemap and robots routes intentionally avoid publishing placeholder sitemap URLs when the setting is absent or invalid.
 
 ## Important limitations
 
 - Conversion is synchronous; there is no queue or distributed worker.
 - No authentication, distributed rate limiting, malware scanner, quota enforcement or abuse monitoring is included.
-- Basic file signatures do not prove a file is safe.
+- Basic file signatures do not prove that a document is safe.
 - Hosting must support containers, LibreOffice, child processes, temporary storage and suitable memory/time limits.
 - Temporary file cleanup is best-effort; configure and test storage lifecycle and cleanup monitoring.
-- The privacy page is a draft notice, not a final legal policy.
-- No production build or conversion tests have been run yet.
+- The privacy page is a technical draft, not a final legal policy.
+- DOC/DOCX rendering can differ from Microsoft Word due to fonts and document features; test representative files.
 - Search indexing and rankings are not guaranteed.
 
 ## Documentation
@@ -57,7 +59,15 @@ Set `NEXT_PUBLIC_SITE_URL` to the real canonical origin in deployment. Update `p
 - [Security threat model and privacy](docs/06-security-threat-model-and-privacy.md)
 - [Test strategy and release gates](docs/07-test-strategy-and-release-gates.md)
 - [MVP implementation decisions and limitations](docs/08-implementation-decisions-and-known-limitations.md)
+- [Local verification runbook](docs/09-local-verification-runbook.md)
 
 ## Before public launch
 
-Run dependency installation, lint/type checks, production build, Docker build, real-file conversion tests, security and cleanup tests. Complete the launch checklist and replace all placeholder domains before deploying.
+1. Complete the full QA matrix, including real DOC and DOCX files with tables, images, headers/footers, page breaks and large documents.
+2. Add effective rate limiting, request/body limits at the hosting edge, abuse monitoring and resource limits.
+3. Review privacy, retention, security and legal wording for the actual operator and hosting provider.
+4. Set the production domain and HTTPS, verify canonical URLs, robots and sitemap.
+5. Deploy to staging, test mobile and accessibility workflows, and configure error reporting, uptime checks and rollback.
+6. Verify the domain in Google Search Console and Bing Webmaster Tools, then submit the sitemap.
+
+Do not treat successful CI as proof of production readiness or guaranteed search rankings.
