@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: base + "/doc-to-pdf", changeFrequency: "monthly", priority: 0.8 },
     { url: base + "/docx-to-pdf", changeFrequency: "monthly", priority: 0.8 },
     { url: base + "/about", changeFrequency: "yearly", priority: 0.4 },
+    { url: base + "/contact", changeFrequency: "yearly", priority: 0.4 },
     { url: base + "/privacy", changeFrequency: "yearly", priority: 0.3 }
   ];
 }
