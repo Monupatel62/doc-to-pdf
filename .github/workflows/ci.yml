@@ -25,6 +25,10 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: Dependency audit summary
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e 'const a=require("/tmp/npm-audit.json"); for (const [name,v] of Object.entries(a.vulnerabilities || {})) console.log(`${v.severity}: ${name}; direct=${v.isDirect}; range=${v.range}; fix=${JSON.stringify(v.fixAvailable)}`); console.log(`Totals: ${JSON.stringify(a.metadata?.vulnerabilities || {})}`)'
       - name: Lint
         run: npm run lint
       - name: Type check
@@ -55,6 +59,8 @@ jobs:
         run: |
           grep -q "Convert DOC and DOCX to PDF" /tmp/home.html
           curl --fail --silent http://localhost:3000/privacy | grep -q "Privacy information"
+          curl --fail --silent http://localhost:3000/robots.txt | grep -q "Disallow: /api/"
+          curl --fail --silent http://localhost:3000/sitemap.xml | grep -q "http://localhost:3000/"
       - name: Generate a minimal DOCX fixture
         run: |
           python3 - <<'PY'
@@ -90,7 +96,7 @@ jobs:
           grep -q "valid DOCX" /tmp/invalid.json
       - name: Print container logs on failure
         if: failure()
-        run: docker logs doc-to-pdf-ci
+        run: docker logs doc-to-pdf-ci || true
       - name: Stop container
         if: always()
         run: docker stop doc-to-pdf-ci || true
