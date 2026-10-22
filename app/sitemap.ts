@@ -18,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = origin.origin;
   return [
     { url: base + "/", changeFrequency: "weekly", priority: 1 },
+    { url: base + "/doc-to-pdf", changeFrequency: "monthly", priority: 0.8 },
+    { url: base + "/docx-to-pdf", changeFrequency: "monthly", priority: 0.8 },
     { url: base + "/privacy", changeFrequency: "yearly", priority: 0.3 }
   ];
 }
