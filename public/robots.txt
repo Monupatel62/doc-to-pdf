@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://example.com/sitemap.xml
+# Add the production sitemap URL here before launch.
+# Example: Sitemap: https://your-real-domain.example/sitemap.xml
