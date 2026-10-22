@@ -4,12 +4,19 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_BYTES = 15 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set([".doc", ".docx"]);
+const MAX_ACTIVE_CONVERSIONS = 2;
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT = 10;
+const MAX_OUTPUT_BYTES = 60 * 1024 * 1024;
+let activeConversions = 0;
+const recentRequests = new Map<string, number[]>();
 
 function errorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -17,14 +24,14 @@ function errorResponse(message: string, status: number) {
 
 function runLibreOffice(inputPath: string, outputDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const profile = "file://" + path.join(outputDir, "lo-profile");
+    const profile = pathToFileURL(path.join(outputDir, "lo-profile")).href;
     const child = spawn("libreoffice", [
       "-env:UserInstallation=" + profile,
       "--headless", "--convert-to", "pdf", "--outdir", outputDir, inputPath
     ], { stdio: ["ignore", "ignore", "pipe"], timeout: 45000 });
     let stderr = "";
     child.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString().slice(0, 4000); });
-    child.on("error", () => reject(new Error("CONVERTER_UNAVAILABLE")));
+    child.on("error", (error: NodeJS.ErrnoException) => reject(new Error(error.code === "ETIMEDOUT" ? "CONVERSION_TIMEOUT" : "CONVERTER_UNAVAILABLE")));
     child.on("close", code => {
       if (code === 0) resolve();
       else reject(new Error(stderr.includes("timed out") ? "CONVERSION_TIMEOUT" : "CONVERSION_FAILED"));
@@ -33,6 +40,18 @@ function runLibreOffice(inputPath: string, outputDir: string): Promise<void> {
 }
 
 export async function POST(request: NextRequest) {
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const clientKey = forwardedFor || request.headers.get("x-real-ip") || "unknown";
+  const now = Date.now();
+  const recent = (recentRequests.get(clientKey) || []).filter(timestamp => now - timestamp < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    return errorResponse("Too many conversion requests. Please wait a few minutes and try again.", 429);
+  }
+  recent.push(now);
+  recentRequests.set(clientKey, recent);
+  if (activeConversions >= MAX_ACTIVE_CONVERSIONS) {
+    return errorResponse("The converter is busy. Please try again shortly.", 503);
+  }
   const contentLength = Number(request.headers.get("content-length") || 0);
   if (contentLength > MAX_BYTES + 1024 * 1024) return errorResponse("Maximum file size is 15 MB.", 413);
 
@@ -57,6 +76,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("This does not appear to be a valid DOC document.", 400);
   }
 
+  activeConversions += 1;
   const workDir = await mkdtemp(path.join(tmpdir(), "doc-to-pdf-"));
   const safeBase = randomUUID();
   const inputPath = path.join(workDir, safeBase + extension);
@@ -66,6 +86,9 @@ export async function POST(request: NextRequest) {
     await writeFile(inputPath, bytes, { mode: 0o600, flag: "wx" });
     await runLibreOffice(inputPath, workDir);
     const output = await readFile(outputPath);
+    if (output.length > MAX_OUTPUT_BYTES) {
+      return errorResponse("The generated PDF is too large to return safely.", 422);
+    }
     if (output.length < 5 || output.subarray(0, 5).toString("ascii") !== "%PDF-") {
       return errorResponse("The converter did not produce a valid PDF. Try another document.", 422);
     }
@@ -87,5 +110,6 @@ export async function POST(request: NextRequest) {
     return errorResponse("Conversion failed. Please check the document and try again.", 422);
   } finally {
     await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
+    activeConversions = Math.max(0, activeConversions - 1);
   }
 }
