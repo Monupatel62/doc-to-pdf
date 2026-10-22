@@ -15,6 +15,8 @@ A green smoke test does not replace broad conversion-quality, security, accessib
 - PDF conversion through LibreOffice in the provided container
 - Random temporary filenames and best-effort temporary directory cleanup
 - Basic security response headers and private, non-cacheable PDF responses
+- Health endpoint at `/api/health` and Docker health check
+- Per-process conversion rate limiting and concurrency caps; run behind hosting-edge request limits
 - Environment-aware sitemap and robots routes
 - Canonical metadata, Open Graph basics, privacy information page
 - CI for lint, type checking, production build, container startup and conversion smoke testing
