@@ -23,7 +23,7 @@ function readPost(slug: string) {
     const item = line.match(/^([a-z]+):\s*"(.*)"$/);
     if (item) fields[item[1]] = item[2];
   }
-  return { ...fields, body: match[2].replace(/^# .+\\n+/, "") };
+  return { ...fields, body: match[2].replace(/^# .+\n+/, "") };
 }
 export function generateStaticParams() { return slugs.map(slug => ({ slug })); }
 
