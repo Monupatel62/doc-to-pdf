@@ -1,9 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { useRef, useState } from "react";
-
-type Result = { error?: string; filename?: string };
+import Converter from "./components/converter";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -13,55 +9,6 @@ const navItems = [
 ];
 
 export default function Home() {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  function chooseFile(next: File | null) {
-    setError("");
-    setSuccess("");
-    if (!next) { setFile(null); return; }
-    const name = next.name.toLowerCase();
-    if (!name.endsWith(".doc") && !name.endsWith(".docx")) {
-      setFile(null); setError("Choose a .doc or .docx file."); return;
-    }
-    if (next.size === 0) { setFile(null); setError("This file is empty."); return; }
-    if (next.size > 15 * 1024 * 1024) {
-      setFile(null); setError("Maximum file size is 15 MB."); return;
-    }
-    setFile(next);
-  }
-
-  async function convert() {
-    if (!file || busy) return;
-    setBusy(true); setError(""); setSuccess("");
-    try {
-      const body = new FormData();
-      body.set("file", file);
-      const response = await fetch("/api/convert", { method: "POST", body });
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({} as Result));
-        throw new Error(result.error || "Conversion failed. Please try again.");
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name.replace(/\.docx?$/i, "") + ".pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setSuccess("Conversion finished. Your PDF download should begin shortly.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <main className="page">
       <header className="site-header">
@@ -73,40 +20,14 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Ad placement reserved for a future approved AdSense unit. No ad script is loaded here. */}
+      {/* Reserved for a future approved ad unit; no ad script is loaded here. */}
       <div id="adsense-header" className="ad-slot ad-slot-header" aria-hidden="true" />
 
       <section className="hero">
         <p className="eyebrow">WORD DOCUMENT CONVERTER</p>
         <h1>Convert DOC and DOCX to PDF</h1>
         <p className="intro">Turn a Word document into a PDF in a few simple steps. Check your file, convert it, and download the result.</p>
-
-        <div className="converter">
-          <input
-            ref={inputRef}
-            className="fileInput"
-            type="file"
-            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={e => chooseFile(e.target.files?.[0] || null)}
-            aria-label="Choose a DOC or DOCX document"
-          />
-          <button className="choose" type="button" onClick={() => inputRef.current?.click()} disabled={busy}>
-            Choose Word document
-          </button>
-          <p className="formats">DOC or DOCX · Maximum 15 MB</p>
-          {file && <p className="selected" aria-live="polite">Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</p>}
-          <button className="convert" type="button" onClick={convert} disabled={!file || busy}>
-            {busy ? "Converting…" : "Convert to PDF"}
-          </button>
-
-          <div className="security-note" role="note">
-            <span className="security-icon" aria-hidden="true">🔒</span>
-            <span><strong>Privacy-conscious file handling</strong><br />Files are processed for conversion. Temporary-file cleanup is best-effort after processing; see our <Link href="/privacy">Privacy Policy</Link>.</span>
-          </div>
-
-          {error && <p className="message error" role="alert">{error}</p>}
-          {success && <p className="message success" role="status">{success}</p>}
-        </div>
+        <Converter />
         <p className="privacyNote">Your document is uploaded to the server to create the PDF. Do not upload confidential files unless you have reviewed the service’s data-handling practices.</p>
       </section>
 
@@ -129,7 +50,7 @@ export default function Home() {
         <details><summary>Will the PDF look exactly like Word?</summary><p>Results can vary by fonts and document features. Review the output before using it for important documents.</p></details>
       </section>
 
-      {/* Ad placement reserved for a future approved AdSense unit. */}
+      {/* Reserved for a future approved ad unit. */}
       <div id="adsense-footer" className="ad-slot ad-slot-footer" aria-hidden="true" />
 
       <footer className="site-footer">
