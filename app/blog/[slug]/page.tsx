@@ -23,7 +23,7 @@ function readPost(slug: string) {
     const item = line.match(/^([a-z]+):\s*"(.*)"$/);
     if (item) fields[item[1]] = item[2];
   }
-  return { ...fields, body: match[2] };
+  return { ...fields, body: match[2].replace(/^# .+\\n+/, "") };
 }
 export function generateStaticParams() { return slugs.map(slug => ({ slug })); }
 
@@ -60,7 +60,7 @@ function renderMarkdown(markdown: string) {
     const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
     if (heading) {
       flushParagraph(); closeList();
-      const level = heading[1].length + 1;
+      const level = heading[1].length;
       output.push("<h" + level + ">" + inlineMarkdown(heading[2]) + "</h" + level + ">");
       continue;
     }
