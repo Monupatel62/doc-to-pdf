@@ -13,7 +13,7 @@ export default function robots(): MetadataRoute.Robots {
         sitemap = new URL("/sitemap.xml", origin).toString();
       }
     } catch {
-      // Do not publish a malformed sitemap URL when deployment config is missing or invalid.
+      // Avoid publishing an invalid sitemap URL when deployment configuration is missing.
     }
   }
 
@@ -21,6 +21,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      // Keep private processing/API endpoints out of search results and crawl queues.
       disallow: ["/api/"]
     },
     ...(sitemap ? { sitemap } : {})
