@@ -70,13 +70,13 @@ export default function Home() {
         {error && <p className="message error" role="alert">{error}</p>}
         {success && <p className="message success" role="status">{success}</p>}
       </div>
-      <p className="privacyNote">Files are sent to the server for conversion. Temporary files are removed after processing. Do not upload sensitive documents until you have reviewed the deployment and privacy configuration.</p>
+      <p className="privacyNote">Files are uploaded for conversion. Temporary files are cleaned up on a best-effort basis after processing. Review our Privacy Policy before uploading documents.</p>
     </section>
     <section className="info" id="how-it-works">
       <h2>How it works</h2>
       <div className="steps"><article><span>01</span><h3>Select a file</h3><p>Choose a Word document in DOC or DOCX format, up to 15 MB.</p></article><article><span>02</span><h3>Convert</h3><p>The server uses LibreOffice to create a PDF from your document.</p></article><article><span>03</span><h3>Download</h3><p>Your browser receives the converted PDF as a download.</p></article></div>
     </section>
     <section className="faq"><h2>Frequently asked questions</h2><details><summary>Which formats are supported?</summary><p>The MVP accepts DOC and DOCX files up to 15 MB. Other formats are not supported.</p></details><details><summary>Are files processed online?</summary><p>Yes. The file is uploaded to the server for conversion. Run this app only on a trusted deployment with appropriate access controls and cleanup settings.</p></details><details><summary>Will the PDF look exactly like Word?</summary><p>Results can vary by fonts and document features. Review the output before using it for important documents.</p></details></section>
-    <footer><p>Doc to PDF · Simple document conversion</p><p><Link href="/doc-to-pdf">DOC to PDF</Link> · <Link href="/docx-to-pdf">DOCX to PDF</Link> · <Link href="/privacy">Privacy information</Link></p></footer>
+    <footer><p>Doc to PDF · Simple document conversion</p><p><Link href="/doc-to-pdf">DOC to PDF</Link> · <Link href="/docx-to-pdf">DOCX to PDF</Link> · <Link href="/privacy">Privacy Policy</Link> · <Link href="/terms">Terms</Link> · <Link href="/about">About & Contact</Link></p></footer>
   </main>;
 }
