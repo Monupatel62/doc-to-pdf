@@ -20,7 +20,7 @@ export default function AboutPage() {
         <li>PDF conversion and browser download</li>
         <li>Free access to the conversion tool</li>
       </ul>
-      <h2>Contact and support</h2>
+      <h2 id="contact">Contact and support</h2>
       <p>Need help with a conversion or want to report a problem? Use the support form or verified support email address configured by the site operator.</p>
       <section aria-label="Contact support" style={{ border: "1px solid #ddd", borderRadius: 8, padding: 20, marginTop: 16 }}>
         <h3>Contact form placeholder</h3>
